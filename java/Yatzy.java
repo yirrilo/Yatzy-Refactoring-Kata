@@ -1,241 +1,131 @@
+import java.util.stream.IntStream;
+
 public class Yatzy {
 
-    public static int chance(int d1, int d2, int d3, int d4, int d5)
+    private static final int POINTS_FOR_YATZY = 50;
+	private static final int MAX_VALUE_OF_DICE = 6;
+	private static final int NUMBER_OF_DICE = 5;
+	protected int[] dices;
+
+    public Yatzy(int... dices)
+    {
+        this.dices = dices;
+    }
+    
+    public static int chance(int... dices)
     {
         int total = 0;
-        total += d1;
-        total += d2;
-        total += d3;
-        total += d4;
-        total += d5;
+        for (int dice : dices){
+        	total += dice;
+        }
         return total;
     }
 
     public static int yatzy(int... dice)
     {
-        int[] counts = new int[6];
-        for (int die : dice)
-            counts[die-1]++;
-        for (int i = 0; i != 6; i++)
-            if (counts[i] == 5)
-                return 50;
-        return 0;
+    	boolean yatzy = true;
+        for (int i = 1; i < NUMBER_OF_DICE; i++){
+            yatzy &= dice[i-1] == dice[i];
+        }
+        return yatzy ? POINTS_FOR_YATZY : 0;
     }
 
-    public static int ones(int d1, int d2, int d3, int d4, int d5) {
-        int sum = 0;
-        if (d1 == 1) sum++;
-        if (d2 == 1) sum++;
-        if (d3 == 1) sum++;
-        if (d4 == 1) sum++;
-        if (d5 == 1) 
-            sum++;
-
-        return sum;
+    public static int ones(int... dices) {
+        return sumDicesOfValue(1, dices);
     }
 
-    public static int twos(int d1, int d2, int d3, int d4, int d5) {
-        int sum = 0;
-        if (d1 == 2) sum += 2;
-        if (d2 == 2) sum += 2;
-        if (d3 == 2) sum += 2;
-        if (d4 == 2) sum += 2;
-        if (d5 == 2) sum += 2;
-        return sum;
+    public static int twos(int... dices) {
+        return sumDicesOfValue(2, dices);
     }
 
-    public static int threes(int d1, int d2, int d3, int d4, int d5) {
-        int s;    
-        s = 0;
-        if (d1 == 3) s += 3;
-        if (d2 == 3) s += 3;
-        if (d3 == 3) s += 3;
-        if (d4 == 3) s += 3;
-        if (d5 == 3) s += 3;
-        return s;
-    }
-
-    protected int[] dice;
-    public Yatzy(int d1, int d2, int d3, int d4, int _5)
-    {
-        dice = new int[5];
-        dice[0] = d1;
-        dice[1] = d2;
-        dice[2] = d3;
-        dice[3] = d4;
-        dice[4] = _5;
+    public static int threes(int... dices) {
+        return sumDicesOfValue(3, dices);
     }
 
     public int fours()
     {
-        int sum;    
-        sum = 0;
-        for (int at = 0; at != 5; at++) {
-            if (dice[at] == 4) {
-                sum += 4;
-            }
-        }
-        return sum;
+        return sumDicesOfValue(4, dices);
     }
 
     public int fives()
     {
-        int s = 0;
-        int i;
-        for (i = 0; i < dice.length; i++) 
-            if (dice[i] == 5)
-                s = s + 5;
-        return s;
+        return sumDicesOfValue(5, dices);
     }
 
     public int sixes()
     {
-        int sum = 0;
-        for (int at = 0; at < dice.length; at++) 
-            if (dice[at] == 6)
-                sum = sum + 6;
+        return sumDicesOfValue(6, dices);
+    }
+
+	private static int sumDicesOfValue(int valueToKeep, int... dices) {
+		int sum = 0;
+        for (int at = 0; at != NUMBER_OF_DICE; at++) {
+            sum += dices[at] == valueToKeep ? valueToKeep : 0 ;
+        }
         return sum;
+	}
+
+    public static int score_pair(int... dices)
+    {
+        return xOfAKind(2, dices);
     }
 
-    public static int score_pair(int d1, int d2, int d3, int d4, int d5)
+	private static int[] whichDiceContainsAtLeast(int[] dices, int threshold, boolean strict) {
+        int[] counts = analyseDices(dices);
+		return IntStream.range(1, counts.length+1)
+				.filter(x -> counts[x-1] >= threshold && !strict || counts[x-1] == threshold && strict)
+				.toArray();
+	}
+
+	private static int[] analyseDices(int... dices) {
+		int[] counts = new int[MAX_VALUE_OF_DICE];
+        for (int die : dices)
+            counts[die-1]++;
+		return counts;
+	}
+
+    public static int two_pair(int... dices)
     {
-        int[] counts = new int[6];
-        counts[d1-1]++;
-        counts[d2-1]++;
-        counts[d3-1]++;
-        counts[d4-1]++;
-        counts[d5-1]++;
-        int at;
-        for (at = 0; at != 6; at++)
-            if (counts[6-at-1] >= 2)
-                return (6-at)*2;
-        return 0;
+        int[] compatibles = whichDiceContainsAtLeast(dices, 2, false);
+        int retour = (compatibles.length<=1)?0:(compatibles[compatibles.length-1]+compatibles[compatibles.length-2])*2;
+        return retour;
     }
 
-    public static int two_pair(int d1, int d2, int d3, int d4, int d5)
+    public static int four_of_a_kind(int... dices)
     {
-        int[] counts = new int[6];
-        counts[d1-1]++;
-        counts[d2-1]++;
-        counts[d3-1]++;
-        counts[d4-1]++;
-        counts[d5-1]++;
-        int n = 0;
-        int score = 0;
-        for (int i = 0; i < 6; i += 1)
-            if (counts[6-i-1] >= 2) {
-                n++;
-                score += (6-i);
-            }        
-        if (n == 2)
-            return score * 2;
-        else
-            return 0;
+        return xOfAKind(4, dices);
     }
 
-    public static int four_of_a_kind(int _1, int _2, int d3, int d4, int d5)
+    public static int three_of_a_kind(int... dices)
     {
-        int[] tallies;
-        tallies = new int[6];
-        tallies[_1-1]++;
-        tallies[_2-1]++;
-        tallies[d3-1]++;
-        tallies[d4-1]++;
-        tallies[d5-1]++;
-        for (int i = 0; i < 6; i++)
-            if (tallies[i] >= 4)
-                return (i+1) * 4;
-        return 0;
+        return xOfAKind(3, dices);
     }
 
-    public static int three_of_a_kind(int d1, int d2, int d3, int d4, int d5)
+	private static int xOfAKind( int threshold, int... dices) {
+		int[] compatibles = whichDiceContainsAtLeast(dices, threshold, false);
+        return compatibles.length < 1 ? 0 : compatibles[compatibles.length-1]*threshold;
+	}
+
+    public static int smallStraight(int... dices)
     {
-        int[] t;
-        t = new int[6];
-        t[d1-1]++;
-        t[d2-1]++;
-        t[d3-1]++;
-        t[d4-1]++;
-        t[d5-1]++;
-        for (int i = 0; i < 6; i++)
-            if (t[i] >= 3)
-                return (i+1) * 3;
-        return 0;
+    	int[] counts = analyseDices(dices);
+    	return allSetToOne(counts, 0, 4) ? 15 : 0;
     }
 
-    public static int smallStraight(int d1, int d2, int d3, int d4, int d5)
+	private static boolean allSetToOne(int[] counts, int minDiceValue, int maxDiceValue) {
+		return IntStream.range(minDiceValue, maxDiceValue).allMatch(x -> counts[x] == 1);    		
+	}
+
+    public static int largeStraight(int... dices)
     {
-        int[] tallies;
-        tallies = new int[6];
-        tallies[d1-1] += 1;
-        tallies[d2-1] += 1;
-        tallies[d3-1] += 1;
-        tallies[d4-1] += 1;
-        tallies[d5-1] += 1;
-        if (tallies[0] == 1 &&
-            tallies[1] == 1 &&
-            tallies[2] == 1 &&
-            tallies[3] == 1 &&
-            tallies[4] == 1)
-            return 15;
-        return 0;
+    	int[] counts = analyseDices(dices);
+    	return allSetToOne(counts, 1, 5) ? 20 : 0;
     }
 
-    public static int largeStraight(int d1, int d2, int d3, int d4, int d5)
+    public static int fullHouse(int... dices)
     {
-        int[] tallies;
-        tallies = new int[6];
-        tallies[d1-1] += 1;
-        tallies[d2-1] += 1;
-        tallies[d3-1] += 1;
-        tallies[d4-1] += 1;
-        tallies[d5-1] += 1;
-        if (tallies[1] == 1 &&
-            tallies[2] == 1 &&
-            tallies[3] == 1 &&
-            tallies[4] == 1
-            && tallies[5] == 1)
-            return 20;
-        return 0;
-    }
-
-    public static int fullHouse(int d1, int d2, int d3, int d4, int d5)
-    {
-        int[] tallies;
-        boolean _2 = false;
-        int i;
-        int _2_at = 0;
-        boolean _3 = false;
-        int _3_at = 0;
-
-
-
-
-        tallies = new int[6];
-        tallies[d1-1] += 1;
-        tallies[d2-1] += 1;
-        tallies[d3-1] += 1;
-        tallies[d4-1] += 1;
-        tallies[d5-1] += 1;
-
-        for (i = 0; i != 6; i += 1)
-            if (tallies[i] == 2) {
-                _2 = true;
-                _2_at = i+1;
-            }
-
-        for (i = 0; i != 6; i += 1)
-            if (tallies[i] == 3) {
-                _3 = true;
-                _3_at = i+1;
-            }
-
-        if (_2 && _3)
-            return _2_at * 2 + _3_at * 3;
-        else
-            return 0;
+        int[] bigSide = whichDiceContainsAtLeast(dices, 3, true);
+        int[] smallSide = whichDiceContainsAtLeast(dices, 2, true);
+        return bigSide.length == 1 && smallSide.length == 1 ? bigSide[0] *3 + smallSide[0] * 2 :0;
     }
 }
-
-
-
